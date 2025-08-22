@@ -19,13 +19,14 @@ rot60 = torch.polar(torch.tensor(1.0, device=device), torch.tensor(math.pi/3, de
 # Koch iterations
 pts = tri
 for _ in range(order):
-    z0, z1 = pts[:-1], pts[1:]
-    v = z1 - z0
-    zA = z0
-    zB = z0 + v/3
-    zC = zB + (v/3) * rot60    # add the equilateral "bump"
-    zD = z0 + 2*v/3
-    pts = torch.cat([torch.stack([zA, zB, zC, zD], 1).reshape(-1), z1[-1].unsqueeze(0)])
+    z0, z1 = pts[:-1], pts[1:] # gives vectorised start/end points for all segments. # segment starts/ends
+    v = z1 - z0 # segment vectors
+    zA = z0 # start
+    zB = z0 + v/3 # 1/3 point
+    zC = zB + (v/3) * rot60    # add the equilateral "bump" # peak of bump = rotate middle third by +60°
+    zD = z0 + 2*v/3 # 2/3 point
+    # Replace each segment A→E with A→B→C→D→E for all segments in parallel
+    pts = torch.cat([torch.stack([zA, zB, zC, zD], 1).reshape(-1), z1[-1].unsqueeze(0)]) # rebuild the whole polyline in one go.
 
 # Plot
 x, y = pts.real.cpu().numpy(), pts.imag.cpu().numpy()
